@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Task` struct in crate `futures`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Task">
+
+    <title>futures::Task - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>futures</a></p><script>window.sidebarCurrent = {name: 'Task', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>futures</a>::<wbr><a class='struct' href=''>Task</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-413' class='srclink' href='../src/futures/src/task.rs.html#33-39' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Task {
+    // some fields omitted
+}</pre><div class='docblock'><p>A structure representing one &quot;task&quot;, or thread of execution throughout the
+lifetime of a set of futures.</p>
+
+<p>It&#39;s intended that futures are composed together to form a large &quot;task&quot; of
+futures which is driven as a whole throughout its lifetime. This task is
+persistent for the entire lifetime of the future until its completion,
+carrying any local data and such.</p>
+
+<p>Currently tasks serve two primary purposes:</p>
+
+<ul>
+<li>They&#39;re used to drive futures to completion, e.g. executors (more to be
+changed here soon).</li>
+<li>They store task local data. That is, any task can contain any number of
+pieces of arbitrary data which can be accessed at a later date. The data
+is owned and carried in the task itself, and <code>TaskData</code> handles are used
+to access the internals.</li>
+</ul>
+
+<p>This structure is likely to expand more customizable functionality over
+time! That is, it&#39;s not quite done yet...</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../futures/struct.Task.html' title='futures::Task'>Task</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-441' class='srclink' href='../src/futures/src/task.rs.html#73-294' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../futures/struct.Task.html' title='futures::Task'>Task</a></code></h4>
+<div class='docblock'><p>Creates a new task ready to drive a future.</p>
+
+<p>The returned task has no internal data stored in it and considers all
+tokens &quot;ready for polling&quot; until informed otherwise.</p>
+</div><h4 id='method.may_contain' class='method'><code>fn <a href='#method.may_contain' class='fnname'>may_contain</a>(&amp;self, token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Tests whether a token may be ready for polling.</p>
+
+<p>As events come in interest in particular tokens can be signaled through
+the <code>TaskHandle::token_ready</code> method. This method can then be used to
+see whether a token has arrive yet or not.</p>
+
+<p>Note that this will never return a false negative, but it can return
+false positives. That is, if a token has been passed to <code>token_ready</code>,
+that exact token will always return <code>true</code>. If a token has not been
+passed to <code>token_ready</code>, though, it may still return <code>true</code>. (e.g. this
+is a bloom filter).</p>
+</div><h4 id='method.insert' class='method'><code>fn <a href='#method.insert' class='fnname'>insert</a>&lt;A&gt;(&amp;mut self, a: A) -&gt; <a class='struct' href='../futures/struct.TaskData.html' title='futures::TaskData'>TaskData</a>&lt;A&gt; <span class='where'>where A: <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static</span></code></h4>
+<div class='docblock'><p>Inserts a new piece of task-local data into this task, returning a
+reference to it.</p>
+
+<p>Ownership of the data will be transferred to the task, and the data will
+be destroyed when the task itself is destroyed. The returned value can
+be passed to the <code>Task::{get, get_mut}</code> methods to get a reference back
+to the original data.</p>
+
+<p>Note that the returned handle is cloneable and copyable and can be sent
+to other futures which will be associated with the same task. All
+futures will then have access to this data when passed the reference
+back.</p>
+</div><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>&lt;A&gt;(&amp;self, data: &amp;<a class='struct' href='../futures/struct.TaskData.html' title='futures::TaskData'>TaskData</a>&lt;A&gt;) -&gt; &amp;A</code></h4>
+<div class='docblock'><p>Get a reference to the task-local data inside this task.</p>
+
+<p>This method should be passed a handle previously returned by
+<code>Task::insert</code>. That handle, when passed back into this method, will
+retrieve a reference to the original data.</p>
+
+<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
+<p>This method will panic if <code>data</code> does not belong to this task. That is,
+if another task generated the <code>data</code> handle passed in, this method will
+panic.</p>
+</div><h4 id='method.get_mut' class='method'><code>fn <a href='#method.get_mut' class='fnname'>get_mut</a>&lt;A&gt;(&amp;mut self, data: &amp;<a class='struct' href='../futures/struct.TaskData.html' title='futures::TaskData'>TaskData</a>&lt;A&gt;) -&gt; &amp;mut A</code></h4>
+<div class='docblock'><p>Get a mutable reference to the task-local data inside this task.</p>
+
+<p>This method should be passed a handle previously returned by
+<code>Task::insert</code>. That handle, when passed back into this method, will
+retrieve a reference to the original data.</p>
+
+<h1 id='panics-1' class='section-header'><a href='#panics-1'>Panics</a></h1>
+<p>This method will panic if <code>data</code> does not belong to this task. That is,
+if another task generated the <code>data</code> handle passed in, this method will
+panic.</p>
+</div><h4 id='method.notify' class='method'><code>fn <a href='#method.notify' class='fnname'>notify</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>During the <code>Future::schedule</code> method, notify to the task that a value is
+immediately ready.</p>
+
+<p>This method, more optimized than <code>TaskHandle::notify</code>, will inform the
+task that the future which is being scheduled is immediately ready to be
+<code>poll</code>ed again.</p>
+</div><h4 id='method.handle' class='method'><code>fn <a href='#method.handle' class='fnname'>handle</a>(&amp;self) -&gt; &amp;<a class='struct' href='../futures/struct.TaskHandle.html' title='futures::TaskHandle'>TaskHandle</a></code></h4>
+<div class='docblock'><p>Gets a handle to this task which can be cloned to a piece of
+<code>Send+&#39;static</code> data.</p>
+
+<p>This handle returned can be used to notify the task that a future is
+ready to get polled again. The returned handle implements the <code>Clone</code>
+trait and all clones will refer to this same task.</p>
+
+<p>Note that if data is immediately ready then the <code>Task::notify</code> method
+should be preferred.</p>
+</div><h4 id='method.scoped' class='method'><code>fn <a href='#method.scoped' class='fnname'>scoped</a>(&amp;mut self) -&gt; ScopedTask</code></h4>
+<div class='docblock'><p>Creates a new temporary &quot;scoped task&quot; for setting the ready tokens.</p>
+
+<p>A scoped task is simply a borrowed version of this task with an
+associated destructor that restores the ready set when it goes out of
+scope. This returned object can use the <code>ScopedTask::ready</code> method to
+indicate that all further calls to <code>Task::may_contain</code> will return true.</p>
+
+<p>This can be useful when one call to <code>poll</code> may poll multiple futures or
+streams, but after one has been resolved the others may all immediately
+be ready so they shouldn&#39;t use the same readiness token sets as the
+previous one.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>futures</span>::<span class='ident'>Task</span>;
+
+<span class='kw'>fn</span> <span class='ident'>poll</span>(<span class='ident'>task</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Task</span>) {
+    <span class='ident'>task</span>.<span class='ident'>may_contain</span>(<span class='number'>1</span>); <span class='comment'>// may return true or false</span>
+
+    {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>task</span> <span class='op'>=</span> <span class='ident'>task</span>.<span class='ident'>scoped</span>();
+
+        <span class='ident'>task</span>.<span class='ident'>may_contain</span>(<span class='number'>1</span>); <span class='comment'>// returns the same as before</span>
+
+        <span class='ident'>task</span>.<span class='ident'>ready</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>task</span>.<span class='ident'>may_contain</span>(<span class='number'>1</span>)); <span class='comment'>// always returns true</span>
+    }
+
+    <span class='ident'>task</span>.<span class='ident'>may_contain</span>(<span class='number'>1</span>); <span class='comment'>// returns the same as the first call</span>
+}</pre>
+</div><h4 id='method.run' class='method'><code>fn <a href='#method.run' class='fnname'>run</a>(self, future: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../futures/trait.Future.html' title='futures::Future'>Future</a>&lt;Item=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Error=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;&gt;)</code></h4>
+<div class='docblock'><p>Consumes this task to run a future to completion.</p>
+
+<p>This function will consume the task provided and the task will be used
+to execute the <code>future</code> provided until it has been completed. The future
+wil be <code>poll</code>&#39;d until it is resolved, at which point the <code>Result&lt;(), ()&gt;</code> will be discarded.</p>
+
+<p>The future will be <code>poll</code>ed on the threads that events arrive on. That
+is, this method does not attempt to control which thread a future is
+polled on.</p>
+
+<h1 id='panics-2' class='section-header'><a href='#panics-2'>Panics</a></h1>
+<p>Currently, if <code>poll</code> panics, then this method will propagate the panic
+to the thread that <code>poll</code> was called on. This is bad and it will change.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "futures";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

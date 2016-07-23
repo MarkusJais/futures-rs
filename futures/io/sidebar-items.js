@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Ready",""]],"fn":[["chain",""],["copy",""],["read_to_end",""],["take",""]],"struct":[["BufReader",""],["BufWriter",""],["Chain",""],["Copy",""],["ReadToEnd",""],["Take",""],["TaskIo",""]],"trait":[["ReadTask",""],["WriteTask",""]]});
